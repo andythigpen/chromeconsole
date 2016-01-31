@@ -1,12 +1,20 @@
+'''
+chromeremote.core
+=================
+Core functionality
+'''
 import asyncio
-import ui
+import chromeremote.ui as ui
 
-loop = asyncio.get_event_loop()
 
-def main():
-    app = loop.create_task(ui.run_async())
+def main(loop=None):
+    ''' Runs the main UI loop. Blocks until the program exits. '''
+    if loop is None:
+        loop = asyncio.get_event_loop()
+
+    ui_task = ui.create_task(loop)
     try:
-        loop.run_until_complete(app)
+        loop.run_until_complete(ui_task)
     finally:
         loop.close()
 
