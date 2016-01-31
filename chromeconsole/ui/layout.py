@@ -1,5 +1,5 @@
 '''
-chromeremote.ui.layout
+chromeconsole.ui.layout
 ======================
 UI Layouts
 '''

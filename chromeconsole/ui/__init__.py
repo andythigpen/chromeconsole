@@ -1,5 +1,5 @@
 '''
-chromeremote.ui
+chromeconsole.ui
 ===============
 UI Implementation
 '''
@@ -17,7 +17,7 @@ from .keybindings import Keybindings
 from .commands import handle_command
 
 
-class ChromeRemoteApplication(object):
+class ChromeConsoleApplication(object):
     ''' Main application object. '''
     def __init__(self, loop):
         self.is_connecting = False
@@ -97,5 +97,5 @@ def create_task(loop, app=None):
     Returns an asyncio task, optionally creating a default app if not provided.
     '''
     if app is None:
-        app = ChromeRemoteApplication(loop)
+        app = ChromeConsoleApplication(loop)
     return loop.create_task(app.run_async())

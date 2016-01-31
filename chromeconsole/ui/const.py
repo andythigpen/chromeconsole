@@ -1,5 +1,5 @@
 '''
-chromeremote.ui.const
+chromeconsole.ui.const
 =====================
 UI constants
 '''

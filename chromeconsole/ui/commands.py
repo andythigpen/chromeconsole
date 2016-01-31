@@ -1,5 +1,5 @@
 '''
-chromeremote.ui.commands
+chromeconsole.ui.commands
 ========================
 '''
 import re

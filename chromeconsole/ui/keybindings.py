@@ -1,5 +1,5 @@
 '''
-chromeremote.ui.keybindings
+chromeconsole.ui.keybindings
 ===========================
 UI key bindings
 '''

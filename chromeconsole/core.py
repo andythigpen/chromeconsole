@@ -1,10 +1,10 @@
 '''
-chromeremote.core
+chromeconsole.core
 =================
 Core functionality
 '''
 import asyncio
-import chromeremote.ui as ui
+import chromeconsole.ui as ui
 
 
 def main(loop=None):
@@ -12,7 +12,7 @@ def main(loop=None):
     if loop is None:
         loop = asyncio.get_event_loop()
 
-    app = ui.ChromeRemoteApplication(loop)
+    app = ui.ChromeConsoleApplication(loop)
     ui_task = ui.create_task(loop, app)
     try:
         loop.run_until_complete(ui_task)
