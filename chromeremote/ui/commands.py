@@ -21,8 +21,9 @@ class Command(object):
     def exec(cls, app, text):
         ''' Finds a matching command and executes it. '''
         for regex, func in cls.commands:
-            if regex.match(text):
-                func(regex, app)
+            match = regex.match(text)
+            if match:
+                func(match, app)
                 return
 
 
@@ -31,6 +32,14 @@ def quit_app(match, app):
     ''' Exits the application. '''
     # pylint: disable=unused-argument
     app.cli.set_return_value(None)
+
+
+@Command('^c(onnect)? ?(?P<host>.*)?(:(?P<port>[0-9]+))?$')
+def connect(match, app):
+    ''' Exits the application. '''
+    host = match.group('host') or 'localhost'
+    port = match.group('port') or 9222
+    app.load_tab_list(host, port)
 
 
 def handle_command(app, text):

@@ -12,12 +12,9 @@ def main(loop=None):
     if loop is None:
         loop = asyncio.get_event_loop()
 
-    ui_task = ui.create_task(loop)
+    app = ui.ChromeRemoteApplication(loop)
+    ui_task = ui.create_task(loop, app)
     try:
         loop.run_until_complete(ui_task)
     finally:
         loop.close()
-
-
-if __name__ == "__main__":
-    main()
