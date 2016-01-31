@@ -6,13 +6,14 @@ UI Implementation
 import asyncio
 
 from prompt_toolkit.application import Application, AbortAction
-from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.buffer import Buffer, AcceptAction
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.shortcuts import create_asyncio_eventloop
 
 from .layout import Layout
 from .const import DEFAULT_BUFFER, COMMAND_BUFFER
 from .keybindings import Keybindings
+from .commands import handle_command
 
 
 class ChromeRemoteApplication(object):
@@ -23,7 +24,9 @@ class ChromeRemoteApplication(object):
         self.bindings = Keybindings()
         self.buffers = {
             DEFAULT_BUFFER: Buffer(is_multiline=True),
-            COMMAND_BUFFER: Buffer(),
+            COMMAND_BUFFER: Buffer(
+                accept_action=AcceptAction(handler=self.handle_action),
+            ),
         }
         self.application = Application(
             layout=self.layout.layout,
@@ -35,12 +38,20 @@ class ChromeRemoteApplication(object):
         )
         self.cli = None
 
+    def handle_action(self, cli, buffer):
+        ''' Executes commands received from command prompt. '''
+        # pylint: disable=unused-argument
+        handle_command(self, buffer.text)
+        # clears the buffer
+        buffer.reset()
+
     @asyncio.coroutine
     def run_async(self):
         ''' Runs the user interface as an async task. '''
         eventloop = create_asyncio_eventloop()
         self.cli = CommandLineInterface(application=self.application,
                                         eventloop=eventloop)
+        self.cli.focus(COMMAND_BUFFER)
         try:
             while True:
                 result = yield from self.cli.run_async()
