@@ -35,11 +35,12 @@ class TabSelectWindow(Window):
     def __init__(self, app):
         self.app = app
         self.token = Token.TabSelectWindow
-        self.current = 0
-        self.selected = 0
         super(TabSelectWindow, self).__init__(
-            TokenListControl(get_tokens=self.get_tokens,
-                             get_default_char=self.get_default_char),
+            TokenListControl(
+                get_tokens=self.get_tokens,
+                get_default_char=self.get_default_char,
+                has_focus=Condition(lambda cli: app.is_selecting_tab),
+            ),
         )
 
     def get_tokens(self, cli):
@@ -48,8 +49,9 @@ class TabSelectWindow(Window):
         tabs = self.app.tabs
         tokens = []
         for idx, tab in enumerate(tabs):
-            if idx == self.selected:
+            if idx == self.app.selected_tab:
                 tokens.extend([
+                    (Token.SetCursorPosition, ''),
                     (self.token.Selected, '{:2d})'.format(idx)),
                     (self.token.Selected, '  {}\n'.format(tab['title'])),
                 ])
@@ -79,29 +81,29 @@ class Layout(object):
     # pylint: disable=too-few-public-methods
     def __init__(self, app):
         self.app = app
+        self.windows = {
+            'main':         MainWindow(),
+            'prompt':       CommandPrompt(),
+            'tab-select':   TabSelectWindow(app),
+        }
         self.layout = FloatContainer(
             content=HSplit([
                 # main window
-                MainWindow(),
+                self.windows['main'],
 
                 # horizontal split
                 Window(height=D.exact(1),
                        content=FillControl('\u2500', token=Token.Line)),
 
                 # command prompt
-                CommandPrompt(),
+                self.windows['prompt'],
             ]),
             floats=[
                 Float(left=0, right=0, top=0, bottom=2, content=HSplit([
                     ConditionalContainer(
-                        content=TabSelectWindow(app),
-                        filter=Condition(self.is_selecting_tab),
+                        content=self.windows['tab-select'],
+                        filter=Condition(lambda cli: app.is_selecting_tab),
                     ),
                 ])),
             ]
         )
-
-    def is_selecting_tab(self, cli):
-        ''' Returns True if the app is currently selecting a tab. '''
-        # pylint: disable=unused-argument
-        return self.app.is_selecting_tab
