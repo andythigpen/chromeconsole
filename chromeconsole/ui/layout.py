@@ -6,12 +6,14 @@ UI Layouts
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout.containers import (
     HSplit, Window, ConditionalContainer, FloatContainer, Float)
-from prompt_toolkit.layout.controls import BufferControl, FillControl
+from prompt_toolkit.layout.controls import (
+    BufferControl, FillControl, TokenListControl)
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.processors import BeforeInput
+from prompt_toolkit.layout.screen import Char
 from pygments.token import Token
 
-from .const import DEFAULT_BUFFER, COMMAND_BUFFER, TAB_SELECT_BUFFER
+from .const import DEFAULT_BUFFER, COMMAND_BUFFER
 
 
 class CommandPrompt(Window):
@@ -30,10 +32,38 @@ class CommandPrompt(Window):
 
 class TabSelectWindow(Window):
     ''' Tab selection window used when connecting. '''
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
+        self.token = Token.TabSelectWindow
+        self.current = 0
+        self.selected = 0
         super(TabSelectWindow, self).__init__(
-            BufferControl(buffer_name=TAB_SELECT_BUFFER),
+            TokenListControl(get_tokens=self.get_tokens,
+                             get_default_char=self.get_default_char),
         )
+
+    def get_tokens(self, cli):
+        ''' Returns a list of tokens used to display the tab list. '''
+        # pylint: disable=unused-argument
+        tabs = self.app.tabs
+        tokens = []
+        for idx, tab in enumerate(tabs):
+            if idx == self.selected:
+                tokens.extend([
+                    (self.token.Selected, '{:2d})'.format(idx)),
+                    (self.token.Selected, '  {}\n'.format(tab['title'])),
+                ])
+            else:
+                tokens.extend([
+                    (self.token.Number, '{:2d})'.format(idx)),
+                    (self.token.Text, '  {}\n'.format(tab['title'])),
+                ])
+        return tokens
+
+    def get_default_char(self, cli):
+        ''' Returns the default background character for a line. '''
+        # pylint: disable=unused-argument
+        return Char(' ', self.token)
 
 
 class MainWindow(Window):
@@ -64,14 +94,14 @@ class Layout(object):
             floats=[
                 Float(left=0, right=0, top=0, bottom=2, content=HSplit([
                     ConditionalContainer(
-                        content=TabSelectWindow(),
-                        filter=Condition(self.is_connecting),
+                        content=TabSelectWindow(app),
+                        filter=Condition(self.is_selecting_tab),
                     ),
                 ])),
             ]
         )
 
-    def is_connecting(self, cli):
-        ''' Returns True if the app is currently connecting to an instance. '''
+    def is_selecting_tab(self, cli):
+        ''' Returns True if the app is currently selecting a tab. '''
         # pylint: disable=unused-argument
-        return self.app.is_connecting
+        return self.app.is_selecting_tab

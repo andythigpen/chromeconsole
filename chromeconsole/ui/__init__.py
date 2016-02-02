@@ -10,36 +10,39 @@ from prompt_toolkit.application import Application, AbortAction
 from prompt_toolkit.buffer import Buffer, AcceptAction
 from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.shortcuts import create_asyncio_eventloop
+from prompt_toolkit.styles import DynamicStyle
 
 from .layout import Layout
-from .const import DEFAULT_BUFFER, COMMAND_BUFFER, TAB_SELECT_BUFFER
+from .const import DEFAULT_BUFFER, COMMAND_BUFFER
 from .keybindings import Keybindings
 from .commands import handle_command
+from .style import get_style
 
 
 class ChromeConsoleApplication(object):
     ''' Main application object. '''
     def __init__(self, loop):
-        self.is_connecting = False
+        self.is_selecting_tab = False
         self.loop = loop
-        self.layout = Layout(self)
-        self.bindings = Keybindings()
-        self.buffers = {
+        layout = Layout(self)
+        bindings = Keybindings()
+        buffers = {
             DEFAULT_BUFFER: Buffer(is_multiline=True),
             COMMAND_BUFFER: Buffer(
                 accept_action=AcceptAction(handler=self.handle_action),
             ),
-            TAB_SELECT_BUFFER: Buffer(is_multiline=True),
         }
         self.application = Application(
-            layout=self.layout.layout,
-            buffers=self.buffers,
-            key_bindings_registry=self.bindings.registry,
+            layout=layout.layout,
+            buffers=buffers,
+            style=DynamicStyle(lambda: get_style('default')),
+            key_bindings_registry=bindings.registry,
             use_alternate_screen=True,
             on_abort=AbortAction.RAISE_EXCEPTION,
             on_exit=AbortAction.RAISE_EXCEPTION,
         )
         self.cli = None
+        self.tabs = []
 
     def handle_action(self, cli, buffer):
         ''' Executes commands received from command prompt. '''
@@ -51,13 +54,8 @@ class ChromeConsoleApplication(object):
     def _display_tab_list(self, future):
         ''' Callback that outputs list of tabs to default buffer. '''
         response = future.result()
-        tabs = response.json()
-        text = ''
-        self.is_connecting = True
-        for idx, tab in enumerate(tabs):
-            text += '{:02d}:  {}\n'.format(idx, tab['title'])
-        self.buffers[TAB_SELECT_BUFFER].text = text
-        self.cli.focus(TAB_SELECT_BUFFER)
+        self.tabs = response.json()
+        self.is_selecting_tab = True
         self.cli.invalidate()
 
     def load_tab_list(self, host='127.0.0.1', port=9222):
