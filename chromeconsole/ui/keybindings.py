@@ -24,40 +24,47 @@ def create_key_bindings(app):
 
     handle = create_handle_decorator(manager.registry)
 
+    @handle(Keys.Down, filter=is_selecting_tab & in_insert_mode)
     @handle('j', filter=is_selecting_tab & in_insert_mode)
     def select_down(event):
         ''' Selects the next tab down in the list. '''
-        app.select_tab_down()
+        app.move_tab_choice_down()
 
+    @handle(Keys.Up, filter=is_selecting_tab & in_insert_mode)
     @handle('k', filter=is_selecting_tab & in_insert_mode)
     def select_up(event):
         ''' Selects the next tab up in the list. '''
-        app.select_tab_up()
+        app.move_tab_choice_up()
 
     @handle(Keys.ControlF, filter=is_selecting_tab & in_insert_mode)
     def select_page_down(event):
         ''' Page down in tab list. '''
         tab_select = app.get_window('tab-select')
         height = tab_select.render_info.window_height
-        app.select_tab_down(height)
+        app.move_tab_choice_down(height)
 
     @handle(Keys.ControlB, filter=is_selecting_tab & in_insert_mode)
     def select_page_up(event):
         ''' Page down in tab list. '''
         tab_select = app.get_window('tab-select')
         height = tab_select.render_info.window_height
-        app.select_tab_up(height)
+        app.move_tab_choice_up(height)
 
     @handle('g', 'g', filter=is_selecting_tab & in_insert_mode)
     def select_bottom(event):
         ''' Bottom of tab list. '''
         tab_select = app.get_window('tab-select')
         height = tab_select.render_info.content_height
-        app.select_tab_down(height)
+        app.move_tab_choice_down(height)
 
     @handle('G', filter=is_selecting_tab & in_insert_mode)
     def select_top(event):
         ''' Top of tab list. '''
         app.selected_tab = 0
+
+    @handle(Keys.ControlJ, filter=is_selecting_tab & in_insert_mode)
+    def select_tab(event):
+        ''' Selects the currently highlighted tab. '''
+        app.select_tab()
 
     return manager

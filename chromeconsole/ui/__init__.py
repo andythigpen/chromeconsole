@@ -71,11 +71,20 @@ class ChromeConsoleApplication(object):
         # pylint: disable=deprecated-method
         asyncio.async(future)
 
-    def select_tab_down(self, lines=1):
+    def select_tab(self):
+        ''' Selects the currently highlighted tab. '''
+        tab = self.tabs[self.selected_tab]
+        url = tab['webSocketDebuggerUrl']
+        self.tabs = []
+        self.is_selecting_tab = False
+        self.selected_tab = 0
+        self.buffers[DEFAULT_BUFFER].text = 'Connecting to {}...\n'.format(url)
+
+    def move_tab_choice_down(self, lines=1):
         ''' Selects a tab down in the tab select list. '''
         self.selected_tab = min(self.selected_tab + lines, len(self.tabs) - 1)
 
-    def select_tab_up(self, lines=1):
+    def move_tab_choice_up(self, lines=1):
         ''' Selects a tab up in the tab select list. '''
         self.selected_tab = max(self.selected_tab - lines, 0)
 
