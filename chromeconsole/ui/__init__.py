@@ -16,8 +16,8 @@ from .const import DEFAULT_BUFFER, COMMAND_BUFFER
 from .keybindings import create_key_bindings
 from .commands import handle_command
 from .style import get_style
-from ..core import load_tab_list, connect_ws, loop_ws
-from ..console import enable_console
+from ..core import load_tab_list, ChromeWebSocket
+from ..console import ChromeConsole
 
 
 class ChromeConsoleApplication(object):
@@ -71,7 +71,8 @@ class ChromeConsoleApplication(object):
         ''' Selects the currently highlighted tab. '''
         tab = self.tabs[self.selected_tab]
         url = tab['webSocketDebuggerUrl']
-        future = connect_ws(url)
+        self.websock = ChromeWebSocket(url)
+        future = self.websock.connect()
         future.add_done_callback(self._connected)
         self.tabs = []
         self.is_selecting_tab = False
@@ -92,12 +93,14 @@ class ChromeConsoleApplication(object):
 
     def _connected(self, future):
         ''' Callback once the websocket has connected. '''
-        self.websock = future.result()
-        # pylint: disable=deprecated-method
-        asyncio.async(loop_ws(self.websock, self.handle_message))
+        success = future.result()
+        if not success:
+            return
+        self.websock.start_loop(self.handle_message)
         self.buffers[DEFAULT_BUFFER].text += 'Connected.\n'
         self.cli.invalidate()
-        asyncio.async(enable_console(self.websock))
+        console = ChromeConsole(self.websock)
+        console.enable()
 
     @asyncio.coroutine
     def handle_message(self, msg):

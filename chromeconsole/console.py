@@ -4,24 +4,17 @@ chromeconsole.console
 Console operations
 See https://developer.chrome.com/devtools/docs/protocol/1.1/console
 '''
-import asyncio
-import json
-from .core import get_message_id
 
 
-@asyncio.coroutine
-def enable_console(websock):
-    ''' Enables the Chrome console domain. '''
-    yield from websock.send(json.dumps({
-        'id': get_message_id(),
-        'method': 'Console.enable',
-    }))
+class ChromeConsole(object):
+    ''' Commands for the Console domain mode. '''
+    def __init__(self, websocket):
+        self.websocket = websocket
 
+    def enable(self, callback=None):
+        ''' Enables the Chrome console domain. Returns a Future. '''
+        return self.websocket.call_method('Console.enable', callback=callback)
 
-@asyncio.coroutine
-def disable_console(websock):
-    ''' Disnables the Chrome console domain. '''
-    yield from websock.send(json.dumps({
-        'id': get_message_id(),
-        'method': 'Console.disable',
-    }))
+    def disable(self, callback=None):
+        ''' Disables the Chrome console domain. Returns a Future. '''
+        return self.websocket.call_method('Console.disable', callback=callback)
